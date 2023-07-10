@@ -70,6 +70,10 @@ def createDataSets():
         # print(len(xds.getTrainingDataSet()))
         # print(len(xds.getValidationDataSet()))
         # print(len(xds.getTestDataSet()))
+        # print("Y set for fold: ", i)
+        # print(len(yds.getTrainingDataSet()))
+        # print(len(yds.getValidationDataSet()))
+        # print(len(yds.getTestDataSet()))
 
 
     # print(len(XdataSets))
@@ -98,3 +102,5 @@ class DataSet:
 
     def getTrainingDataSet(self):
         return self.trainData
+
+# createDataSets()
