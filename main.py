@@ -6,24 +6,13 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 import pandas as pd
 import numpy as np
 
-def regularPadding():
 
-    # 1: Priprema skupa podataka
-    df = pd.read_csv('amp.csv')
-    sequences = df['sequence'].tolist()
-    labels = df['label'].tolist()
-
-    amino_acids = list(set(''.join(sequences)))
-    # Staviti da se enumerira od 1
-    amino_to_num = {amino: num for num, amino in enumerate(amino_acids)}
-    numerical_sequences = [[amino_to_num[amino] for amino in sequence] for sequence in sequences]
-    # Podjela skupa podataka u skup za trening i testing
-    X_train, X_test, y_train, y_test = train_test_split(numerical_sequences, labels, test_size=0.2, random_state=42)
+def regularPadding(X_train, X_test, y_train, y_test):
 
     # Step 2: Data Preprocessing
     max_length = max(len(seq) for seq in X_test)
 
-    # Perform padding on the sequences
+    # Perform padding on the sequences  
     X_train_padded = pad_sequences(X_train, maxlen=max_length, padding='post', value=0.0)
     X_test_padded = pad_sequences(X_test, maxlen=max_length, padding='post', value=0.0)
 
@@ -52,21 +41,7 @@ def regularPadding():
 
 
 
-def stopSignal():
-    # 1: Priprema skupa podataka
-    df = pd.read_csv('amp.csv')
-
-    sequences = df['sequence'].tolist()
-    labels = df['label'].tolist()
-
-    # Staviti da se enumerira od 1
-    amino_acids = list(set(''.join(sequences)))
-    amino_to_num = {amino: num for num, amino in enumerate(amino_acids)}
-    numerical_sequences = [[amino_to_num[amino] for amino in sequence] for sequence in sequences]
-    # Podjela skupa podataka u skup za trening i testing
-
-    X_train, X_test, y_train, y_test = train_test_split(numerical_sequences, labels, test_size=0.2, random_state=42)
-
+def stopSignal(X_train, X_test, y_train, y_test):
     # Step 2: Data Preprocessing
     stop_character = -1
     X_train_stop = [seq + [stop_character] for seq in X_train]
