@@ -47,28 +47,28 @@ def regularPadding(fold, X_train, X_val, X_test, y_train, y_val, y_test, padding
     # print(model_input)
     # Same padding should have no effect since all data has already been padded beforehand
     x = Conv1D(32, 4, padding='same', kernel_initializer='he_normal', name="conv1d_1")(model_input)
-    print("conv1d 1 generated")
+    # print("conv1d 1 generated")
     x = Conv1D(64, 4, padding='same', kernel_initializer='he_normal', name="conv1d_2")(x)
-    print("conv1d 2 generated")
+    # print("conv1d 2 generated")
     x = Bidirectional(LSTM(256, unroll=True, name="bi_lstm"))(x)
-    print("bidir generated")
+    # print("bidir generated")
     x = Dropout(0.2, name="dropout")(x)
-    print("dropout generated")
+    # print("dropout generated")
     x = Dense(1, activation='sigmoid', name="output_dense")(x)
-    print("dense generated")
+    # print("dense generated")
     model = Model(inputs=model_input, outputs=x)
-    print("model generated")
+    # print("model generated")
 
     # Trening modela. Za ovaj learning rate smo takoder utvrdili da je optimalan.
     adam_optimizer = keras.optimizers.Adam(learning_rate=0.0001)
-    print("adam generated")
+    # print("adam generated")
 
     # Definicija early stoppinga koji ce automatski zaustaviti treniranje kada se loss na validacijskom setu prestane smanjivati.
     # Restore_best_weights=true omogucava da zadrzimo model koji je imao najmanji loss na validacijskom setu.
     early_stopping_callback = keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
-    print("bidir generated")
+    # print("bidir generated")
     model.compile(loss="binary_crossentropy", optimizer=adam_optimizer)
-    print("compile generated")
+    # print("compile generated")
 
     model.fit(
         X_train_padded,
@@ -78,7 +78,7 @@ def regularPadding(fold, X_train, X_val, X_test, y_train, y_val, y_test, padding
         batch_size=32,
         callbacks=[early_stopping_callback],
     )
-    print("fit generated")
+    # print("fit generated")
     # model = Sequential()
     # model.add(
     #     Dense(64, activation='relu', input_dim=max_length))
@@ -88,19 +88,21 @@ def regularPadding(fold, X_train, X_val, X_test, y_train, y_val, y_test, padding
 
     # Evaluate the model
     y_pred = model.predict(X_test_padded)
-    y_pred_binary = (y_pred > 0.5).astype(int)
+    y_pred_binary = (y_pred > 0.5).astype(int) # Turn the predictions into 1s and 0s ? Why this crudely
 
     # Metrics
     accuracy = accuracy_score(y_test, y_pred_binary, normalize=True)
-    print("acc generated")
+    # print("acc generated")
     mcc = matthews_corrcoef(y_test, y_pred_binary, sample_weight=None)
-    print("mcc generated")
+    # print("mcc generated")
     f1 = f1_score(y_test, y_pred_binary, labels=None, pos_label=1, average='binary', sample_weight=None, zero_division='warn')
-    print("f1 generated")
-    gm = geometric_mean_score(y_test, y_pred_binary, labels=None, pos_label=1, average='multiclass', sample_weight=None, correction=0.0)
-    print("gm generated")
+    # print("f1 generated")
+    # DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples, ), for example using ravel().
+    # y = column_or_1d(y, dtype=self.classes_.dtype, warn=True)
+    gm = geometric_mean_score(y_test, y_pred_binary.ravel(), labels=None, pos_label=1, average='multiclass', sample_weight=None, correction=0.0)
+    # print("gm generated")
 
-    with open((f'metrics-{fold}.txt'), "a") as file:
+    with open((f'no-stop-signal-metrics-{padding_type}-{fold}.txt'), "a") as file:
         file.write(f"\nacc: {accuracy}\nmcc: {mcc}\nf1: {f1}\ngm: {gm}")
 
 
@@ -153,3 +155,4 @@ for i in range(len(xDataSet)):
     y_test = yDataSet[i].getTestDataSet()
 
     regularPadding(i, X_train, X_val, X_test, y_train, y_val, y_test, 'post')
+    regularPadding(i, X_train, X_val, X_test, y_train, y_val, y_test, 'pre')

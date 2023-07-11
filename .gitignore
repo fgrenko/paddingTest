@@ -1,4 +1,5 @@
 .idea
 accuracy.txt
 __pycache__
-metrics-*.txt
+no-stop-signal-metrics-*.txt
+stop-signal-metrics-*.txt
