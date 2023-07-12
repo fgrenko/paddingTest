@@ -7,6 +7,7 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.layers import Dropout, Input
 from tensorflow.keras.layers import LSTM, Bidirectional, Conv1D
 from tensorflow.keras.models import Model#, Sequential
+from scipy.stats import wilcoxon
 import tensorflow.keras as keras
 
 import numpy as np
@@ -74,7 +75,7 @@ def regularPadding(fold, X_train, X_val, X_test, y_train, y_val, y_test, padding
         X_train_padded,
         y_train,
         validation_data=(X_val_padded, y_val),
-        epochs=200, 
+        epochs=200,
         batch_size=32,
         callbacks=[early_stopping_callback],
     )
@@ -104,6 +105,8 @@ def regularPadding(fold, X_train, X_val, X_test, y_train, y_val, y_test, padding
 
     with open((f'no-stop-signal-metrics-{padding_type}-{fold}.txt'), "a") as file:
         file.write(f"\nacc: {accuracy}\nmcc: {mcc}\nf1: {f1}\ngm: {gm}")
+
+    return accuracy,mcc,f1,gm
 
 
 def stopSignal(fold, X_train, X_val, X_test, y_train, y_val, y_test, padding_type):
@@ -152,7 +155,7 @@ def stopSignal(fold, X_train, X_val, X_test, y_train, y_val, y_test, padding_typ
         X_train_padded,
         y_train,
         validation_data=(X_val_padded, y_val),
-        epochs=200, 
+        epochs=200,
         batch_size=32,
         callbacks=[early_stopping_callback],
     )
@@ -166,17 +169,24 @@ def stopSignal(fold, X_train, X_val, X_test, y_train, y_val, y_test, padding_typ
     mcc = matthews_corrcoef(y_test, y_pred_binary, sample_weight=None)
     f1 = f1_score(y_test, y_pred_binary, labels=None, pos_label=1, average='binary', sample_weight=None, zero_division='warn')
     gm = geometric_mean_score(y_test, y_pred_binary.ravel(), labels=None, pos_label=1, average='multiclass', sample_weight=None, correction=0.0)
-    
+
     with open((f'stop-signal-metrics-{padding_type}-{fold}.txt'), "a") as file:
         file.write(f"\nacc: {accuracy}\nmcc: {mcc}\nf1: {f1}\ngm: {gm}")
+
+    return accuracy, mcc, f1, gm
 
 
 ## legit main
 # 1. Create Train, test and validation data sets for both protein sequence data and their labels - 10 fold cross-validation
 xDataSet, yDataSet = createDataSets()
-
+no_stop_signal_post_acc = []
+no_stop_signal_pre_acc = []
+stop_signal_post_acc = []
+stop_signal_pre_acc = []
 # xDataSet and yDataSet are of same fold lenght
+
 for i in range(len(xDataSet)):
+    print("FOLD ", i)
     X_train = xDataSet[i].getTrainingDataSet()
     X_val = xDataSet[i].getValidationDataSet()
     X_test = xDataSet[i].getTestDataSet()
@@ -184,7 +194,60 @@ for i in range(len(xDataSet)):
     y_val = yDataSet[i].getValidationDataSet()
     y_test = yDataSet[i].getTestDataSet()
 
+    print("POST obican ")
+    no_stop_signal_post_acc.append(regularPadding(i, X_train, X_val, X_test, y_train, y_val, y_test, 'post')[0])
+    print("PRE obican ")
+    no_stop_signal_pre_acc.append(regularPadding(i, X_train, X_val, X_test, y_train, y_val, y_test, 'pre')[0])
+    print("POST  stop signal ")
+    stop_signal_post_acc.append(stopSignal(i, X_train, X_val, X_test, y_train, y_val, y_test, 'post')[0])
+    print("PRE  stop signal ")
+    stop_signal_pre_acc.append(stopSignal(i, X_train, X_val, X_test, y_train, y_val, y_test, 'pre')[0])
+
     regularPadding(i, X_train, X_val, X_test, y_train, y_val, y_test, 'post')
     regularPadding(i, X_train, X_val, X_test, y_train, y_val, y_test, 'pre')
     stopSignal(i, X_train, X_val, X_test, y_train, y_val, y_test, 'post')
     stopSignal(i, X_train, X_val, X_test, y_train, y_val, y_test, 'pre')
+
+stat_post, p_value_post = wilcoxon(no_stop_signal_post_acc, stop_signal_post_acc)
+print("p-value (no-stop-signal vs. stop-signal, post-padding):", p_value_post)
+print("statpost - ", stat_post)
+
+# "no-stop-signal" vs. "stop-signal" with "pre" padding
+stat_pre, p_value_pre = wilcoxon(no_stop_signal_pre_acc, stop_signal_pre_acc)
+print("p-value (no-stop-signal vs. stop-signal, pre-padding):", p_value_pre)
+print("statpre - ", stat_pre)
+
+# pre vs post no stop signal
+stat_pre_post, p_value_pre_post = wilcoxon(no_stop_signal_pre_acc, no_stop_signal_post_acc)
+print("p-value (no-stop-signal vs. stop-signal, pre-padding):", p_value_pre_post)
+print("statpre - ", stat_pre_post)
+
+# pre vs post  stop signal
+stat_post_pre, p_value_post_pre = wilcoxon(no_stop_signal_pre_acc, no_stop_signal_post_acc)
+print("p-value (no-stop-signal vs. stop-signal, pre-padding):", p_value_post_pre)
+print("statpre - ", stat_post_pre)
+
+
+# no_stop_signal_post = [0.8512221041445271,0.8405951115834219, 0.8512221041445271,0.8586609989373007,0.8597236981934112,0.8533475026567482,0.8820403825717322,0.8799149840595112,0.8671625929861849,0.8702127659574468]
+# no_stop_signal_pre = [0.8618490967056323, 0.8544102019128587,0.8501594048884166,0.8767268862911796,0.873538788522848,0.8607863974495218,0.8756641870350691,0.8724760892667375,0.8671625929861849,0.8617021276595744]
+# stop_signal_post = [0.8251859723698194,0.8172157279489904, 0.834750265674814,0.8368756641870351,0.8335991493886231,0.8363443145589798,0.8671625929861849,0.8767268862911796,0.8618490967056323,0.8563829787234043]
+# stop_signal_pre = [0.7968119022316684,0.8358843537414966,0.8671625929861849,0.8480340063761955,0.869287991498406,0.8544102019128587,0.8597236981934112,0.8629117959617428,0.8756641870350691,0.8702127659574468]
+#
+# stat_post, p_value_post = wilcoxon(no_stop_signal_post, stop_signal_post)
+# print("p-value (no-stop-signal vs. stop-signal, post-padding):", p_value_post)
+# print("statpost - ", stat_post)
+#
+# # "no-stop-signal" vs. "stop-signal" with "pre" padding
+# stat_pre, p_value_pre = wilcoxon(no_stop_signal_pre, stop_signal_pre)
+# print("p-value (no-stop-signal vs. stop-signal, pre-padding):", p_value_pre)
+# print("statpre - ", stat_pre)
+#
+# # pre vs post no stop signal
+# stat_pre_post, p_value_pre_post = wilcoxon(no_stop_signal_post, no_stop_signal_pre)
+# print("p-value (no-stop-signal vs. stop-signal, pre-padding):", p_value_pre_post)
+# print("statpre - ", stat_pre_post)
+#
+# # pre vs post  stop signal
+# stat_post_pre, p_value_post_pre = wilcoxon(stop_signal_post, stop_signal_pre)
+# print("p-value (no-stop-signal vs. stop-signal, pre-padding):", p_value_post_pre)
+# print("statpre - ", stat_post_pre)
