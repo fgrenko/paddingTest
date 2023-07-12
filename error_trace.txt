@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Desktop\fax\er\paddingTest\main.py", line 166, in <module>      
+    # stopSignal(i, X_train, X_val, X_test, y_train, y_val, y_test, 'post')
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python311\Lib\site-packages\scipy\_lib\_util.py", line 700, in wrapper
+    return fun(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python311\Lib\site-packages\scipy\stats\_axis_nan_policy.py", line 502, in axis_nan_policy_wrapper
+    res = hypotest_fun_out(*samples, **kwds)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python311\Lib\site-packages\scipy\stats\_morestats.py", line 3396, in wilcoxon
+    raise ValueError('The samples x and y must have the same length.')
+ValueError: The samples x and y must have the same length.
