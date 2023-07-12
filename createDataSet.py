@@ -26,7 +26,7 @@ def createDataSets():
     # Stratified K fold - 10 fold
     # Remove -(set to None)- random state after testing, random_state=1
     # ValueError: Setting a random_state has no effect since shuffle is False. You should leave random_state to its default (None), or set shuffle=True.
-    skf = StratifiedKFold(n_splits=10, random_state=42, shuffle=True) # training vs test -> 90% - 10%
+    skf = StratifiedKFold(n_splits=3, random_state=42, shuffle=True) # training vs test -> 90% - 10%
     skf.get_n_splits(numerical_sequences, labels)
 
     # Split data into 10 folds of trainig and test data
